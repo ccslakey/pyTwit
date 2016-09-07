@@ -3,17 +3,27 @@ import ipdb
 import requests
 import gzip
 import base64
+import pprint
 from secrets import twitter_secrets
 
+pp = pprint.PrettyPrinter(width=41, compact=True, indent=4)
 class SimpleTwitter:
     def __init__(self, config):
         self.config = config
         self.headers = self.init_headers()
 
-    def get_user_timeline(self, username="cslinkyrun"):
-        url = "https://api.twitter.com/1.1/statuses/user_timeline.json?count=100&screen_name=%s" % username
-        response = requests.get(url, headers=self.headers)
-        return response
+    def get_user_timeline(self, username="BarackObama"):
+        base_url = "https://api.twitter.com/1.1/statuses/user_timeline.json?count=200&screen_name=%s" % username
+        response = requests.get(base_url, headers=self.headers)
+        tweets = json.loads(response.content.decode())
+        # ^oldest tweet id
+        for i in range(9):
+            # get 2000 most recent tweets via faux pagination
+            max_id = str(tweets[-1]['id'] - 1)
+            response = requests.get(base_url+"&max_id="+max_id, headers=self.headers)
+            tweets += json.loads(response.content.decode())
+        return tweets
+
 
     def encoded_token(self):
       key = self.config['key']
